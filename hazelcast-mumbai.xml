@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hazelcast
+        xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.10.xsd"
+        xmlns="http://www.hazelcast.com/schema/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <group>
+        <name>mumbai</name>
+    </group>
+    <properties>
+        <property name="hazelcast.logging.type">slf4j</property>
+        <property name="hazelcast.operation.call.timeout.millis">30000</property>
+        <property name="hazelcast.memcache.enabled">false</property>
+        <property name="hazelcast.rest.enabled">false</property>
+    </properties>
+    <management-center enabled="false"/>
+
+    <wan-replication name="my-wan-cluster">
+        <wan-publisher group-name="chennai">
+            <!--<class-name>com.hazelcast.enterprise.wan.replication.WanBatchReplication</class-name>-->
+            <class-name>com.thebytecloud.hazelcastwandemo.CustomWanReplication</class-name>
+            <queue-full-behavior>THROW_EXCEPTION</queue-full-behavior>
+            <queue-capacity>1000</queue-capacity>
+            <properties>
+                <property name="batch.size">500</property>
+                <property name="batch.max.delay.millis">1000</property>
+                <property name="snapshot.enabled">false</property>
+                <property name="response.timeout.millis">60000</property>
+                <property name="ack.type">ACK_ON_OPERATION_COMPLETE</property>
+                <property name="endpoints">chennai-node1:5701</property>
+                <property name="group.password">london-pass</property>
+                <property name="discovery.period">20</property>
+                <property name="executorThreadCount">2</property>
+            </properties>
+        </wan-publisher>
+    </wan-replication>
+
+    <map name="demo-cache">
+        <wan-replication-ref name="my-wan-cluster">
+            <merge-policy>com.hazelcast.map.merge.PassThroughMergePolicy</merge-policy>
+            <republishing-enabled>false</republishing-enabled>
+        </wan-replication-ref>
+    </map>
+
+    <network>
+        <interfaces enabled="false">
+            <interface>localhost</interface>
+        </interfaces>
+        <port auto-increment="false" port-count="100">5701</port>
+        <outbound-ports>
+            <ports>0</ports>
+        </outbound-ports>
+        <join>
+            <multicast enabled="true">
+                <multicast-group>224.2.2.3</multicast-group>
+                <multicast-port>54327</multicast-port>
+            </multicast>
+            <tcp-ip enabled="false">
+                <member>131.10.20.205:5701</member>
+            </tcp-ip>
+            <aws enabled="false"/>
+        </join>
+        <reuse-address>true</reuse-address>
+        <ssl enabled="false"/>
+        <socket-interceptor enabled="false"/>
+        <symmetric-encryption enabled="false">
+            <!--
+               encryption algorithm such as
+               DES/ECB/PKCS5Padding,
+               PBEWithMD5AndDES,
+               AES/CBC/PKCS5Padding,
+               Blowfish,
+               DESede
+            -->
+            <algorithm>PBEWithMD5AndDES</algorithm>
+            <!-- salt value to use when generating the secret key -->
+            <salt>thesalt</salt>
+            <!-- pass phrase to use when generating the secret key -->
+            <password>thepass</password>
+            <!-- iteration count to use when generating the secret key -->
+            <iteration-count>19</iteration-count>
+        </symmetric-encryption>
+    </network>
+    <partition-group enabled="true" group-type="HOST_AWARE" />
+</hazelcast>

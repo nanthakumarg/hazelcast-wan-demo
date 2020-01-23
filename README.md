@@ -1,0 +1,1 @@
+# Demo application for Hazelcast WAN Replication in Spring
